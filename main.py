@@ -2,42 +2,74 @@ import cv2
 import numpy as np
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
-import torchvision.transforms as transforms
+from ultralytics import YOLO
 
+model = YOLO("yolo26n.pt")
 
-image = cv2.imread("images.png")
-print(torch.is_tensor(image))
-#convert to tensor
-transform = transforms.Compose([transforms.ToTensor()])
-
-tensor = transform(image)
-
-
-#scrap this shit for now, do an object detection tutorial
-# https://medium.com/@ml_dl_explained/understanding-2d-convolutions-in-pytorch-b35841149f5f
-edge_kernel = torch.tensor([[[[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]]]], dtype=torch.float32)
-conv_layer = nn.Conv2d(in_channels=3, out_channels=2, kernel_size=3, stride=2, padding=1, dilation=2)
-conv_layer.weight = torch.nn.Parameter(edge_kernel)
-
-#image = image.unsqueeze(0)  # Add batch dimension
-output = conv_layer(image)
-
-fig, ax = plt.subplots(1, 2)
-ax[0].imshow(image.squeeze(), cmap='gray')
-ax[0].set_title("Original Image")
-ax[1].imshow(output.detach().squeeze(), cmap='gray')
-ax[1].set_title("Edge Detection Output")
-plt.show()
-
+#image = cv2.imread("images.png")
 cap = cv2.VideoCapture("test.mp4")
-cap2 = cv2.VideoCapture(1)
 
+#capture camera
+cam = cv2.VideoCapture(1)
 
 while(True):
-    #reads the feed
+
+    #reads the cam feed
     ret, frame = cap.read()
-    frame
+
+    results = model(frame, stream=True)
+    for result in results:
+        xywh = result.boxes.xywh  # center-x, center-y, width, height
+        xywhn = result.boxes.xywhn  # normalized
+        xyxy = result.boxes.xyxy  # top-left-x, top-left-y, bottom-right-x, bottom-right-y
+        xyxyn = result.boxes.xyxyn  # normalized
+        #print(xyxyn)
+        names = [result.names[cls.item()] for cls in result.boxes.cls.int()]  # class name of each box
+        confs = result.boxes.conf  # confidence score of each box
+        #shows pngs in browser
+        #results.show()
+
+        font = cv2.FONT_HERSHEY_SIMPLEX
+
+        for n in xywh:
+            centerx = int(n[0])
+            centery = int(n[1])
+            width = int(n[2])
+            height = int(n[3])
+
+        for m in xyxy:
+            xA = int(m[0])
+            yA = int(m[1])
+            xB = int(m[2])
+            yB = int(m[3])
+
+        #for k in confs:
+        print("THIS IS", confs)
+
+        
+
+        cv2.rectangle(frame,(xA, yA),(xB, yB),(0,0,0),3)
+
+        for name in names:
+            namae = name
+            #midxB = xB/2
+    
+        cv2.putText(frame, namae, (centerx, yA), font, 1, (0,255,255),2, cv2.LINE_4)
+
+        #need to isolate only the conf value
+        cv2.putText(frame, str(confs), (centerx, yB), font, 1, (0,255,255),2, cv2.LINE_4)
+
+    if ret:
+        #cv2.line(frame, (0, 0), (500, 600), (0, 0, 0), 1)
+        cv2.imshow('main',frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+
+    else:
+        print("could not capture frame")
+
+    
 
     #print (frame)
     
@@ -45,12 +77,3 @@ while(True):
     #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #then pass in like this
     #cv2.imshow('frame',gray)
-    
-
-    
-    cv2.imshow('frame',frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
