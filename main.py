@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 from ultralytics import YOLO
 
+#pretrained
 model = YOLO("yolo26n.pt")
 
 #image = cv2.imread("images.png")
