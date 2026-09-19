@@ -16,7 +16,7 @@ cam = cv2.VideoCapture(1)
 while(True):
 
     #reads the cam feed
-    ret, frame = cap.read()
+    ret, frame = cam.read()
 
     results = model(frame, stream=True)
     for result in results:
